@@ -1,98 +1,61 @@
 #include <iostream>
-#include <sstream>
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <string.h>
 #include <netdb.h>
-#include <bitset>
- 
-int main(int argc, char *argv[])
+#include <unistd.h>
+
+
+int create_socket()
 {
-    // Create socket
-    int s0 = socket(AF_INET, SOCK_STREAM, 0);
-    if(s0 < 0)
+    int s = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(s < 0)
     {
         std::cerr << "Error: " << strerror(errno) << std::endl;
         exit(1);
     }
- 
-    // Fill in server IP address
+
+    return s;
+}
+
+int main()
+{
+    const char *peer_host = "localhost";
+    const short peer_port = 1234;
+
+    // Create the socket
+    int s0 = create_socket(); //socket(AF_INET, SOCK_STREAM, 0);
+
+    // Fill in the server IP address
     struct sockaddr_in server;
     int serverAddrLen;
     bzero(&server, sizeof(server));
- 
-    char* peerHost = "localhost";
 
-    if(argc > 1)
-    {
-        peerHost = argv[1];
-    }
+    // resolve server addr
+    struct hostent *host = gethostbyname(peer_host);
 
-    // Resolve server address (convert from symbolic name to IP number)
-    struct hostent *host = gethostbyname(peerHost);
-    if(host == NULL)
-    {
-        std::cerr << "Error: " << strerror(errno) << std::endl;
-        exit(1);
-    }
- 
     server.sin_family = AF_INET;
-    short peerPort = 1234;
-    if(argc >= 3)
-    {
-        peerPort = (short) atoi(argv[2]);
-    }
-    server.sin_port = htons(peerPort);
- 
-    // Write resolved IP address of a server to the address structure
+    server.sin_port = htons(peer_port);
+
+    // Write resolved IP of server to addr struct
     memmove(&(server.sin_addr.s_addr), host->h_addr_list[0], 4);
- 
-    // Connect to the remote server
-    int res = connect(s0, (struct sockaddr*) &server, sizeof(server));
-    if(res < 0)
-    {
-        std::cerr << "Error: " << strerror(errno) << std::endl;
-        exit(1);
-    }
 
-    // Take user input here:
-    char user_input[] = "hello"; // Take input later. 
+    // connect to server
+    int conn = connect(s0, (struct sockaddr*) &server, sizeof(server));
 
-    // "encrypt"
-    for(int i = 0; i < (sizeof(user_input)-1); ++i)
-    {
-        user_input[i] = (~user_input[i]); 
-    }
-    // TODO: Write encryption subroutine
+    /* Server interaction*/
+    char input[] = "Hello";
+    int packet_size = 1024;
 
-    // Send user-input to server
-    write(s0, user_input, sizeof(user_input));
-    
-    // Take server response
-    char buffer[1024];
-    res = read(s0, buffer, 1024);
-    if(res < 0)
-    {
-        std::cerr << "Error: " << strerror(errno) << std::endl;
-        exit(1);
-    }
-    buffer[res] = 0;
-    //std::cout << "<SERVER SAYS>: " << buffer << std::endl;
+    // Send input to server.
+    write(s0, input, sizeof(input));
 
-    // "decrypt"
-    // TODO: Write decryption subroutine
-    for(int i = 0; i < sizeof(user_input)-1; ++i)
-    {
-        buffer[i] = (~buffer[i]);
-    }
+    // RECV from server
+    char buffer[packet_size];
+    int res = read(s0, buffer, packet_size);
 
-    std::cout << "Decrypted: " << buffer << std::endl;
-
-    close(s0);
+    // Print what server sends 
+    std::cout << "<Server returns>: " << buffer << std::endl;
 
     return 0;
 }
- 
