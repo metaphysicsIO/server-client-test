@@ -17,8 +17,24 @@ int create_socket()
     return s;
 }
 
+struct sockaddr_in set_self_addr(short listen_port)
+{
+    //TODO: Remove arg when Server class made.
+    struct sockaddr_in my_addr;
+
+    memset(&my_addr, 0, sizeof(struct sockaddr_in));
+    
+    my_addr.sin_family = AF_INET;
+    my_addr.sin_port = htons(listen_port);
+    my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    
+    return my_addr;
+}
+
 int main()
 {
+    // TODO: Create server class.
+    // TODO: Add variables as needed.
     const short listen_port = 1234;
     const int MAX_QUEUE_LENGTH = 1;
     const int packet_size = 1024;
@@ -27,11 +43,7 @@ int main()
     int s0 = create_socket(); //socket(AF_INET, SOCK_STREAM, 0);
 
     // Set addr struct containing self-address
-    struct sockaddr_in my_addr;
-    memset(&my_addr, 0, sizeof(struct sockaddr_in));
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(listen_port);
-    my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    sockaddr_in my_addr = set_self_addr(listen_port); // TODO: remove `listen_port` after server class made.
 
     // bind sock to addr
     int res = bind(s0, (struct sockaddr*) &my_addr, sizeof(my_addr));
