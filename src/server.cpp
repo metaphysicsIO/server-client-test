@@ -38,6 +38,8 @@ int main()
     const short listen_port = 1234;
     const int MAX_QUEUE_LENGTH = 1;
     const int packet_size = 1024;
+    char exit[packet_size] = "quit";
+    bool play = true;
 
     // Create the socket
     int s0 = create_socket(); //socket(AF_INET, SOCK_STREAM, 0);
@@ -60,15 +62,25 @@ int main()
     socklen_t peer_addr_len;
     int s1 = accept(s0, (struct sockaddr*) &peer_addr, &peer_addr_len);
 
-    // RECV from client
-    char buffer[packet_size];
-    conn = read(s1, buffer, packet_size);
+    // Continue until kill SIG
+    while(play)
+    {
+        // RECV from client
+        char buffer[packet_size];
+        conn = read(s1, buffer, packet_size);
 
-    // Print client message
-    std::cout << "<Client returns>: " << buffer << std::endl;
+        // Print client message
+        std::cout << "<Client returns>: " << buffer << std::endl;
 
-    // Respond to client (with client message)
-    write(s1, buffer, sizeof(buffer));
+        // Respond to client (with client message)
+        write(s1, buffer, sizeof(buffer));
+
+        // Check if exiting.
+        if(buffer == exit)
+        {
+            play = false;
+        }
+    }
 
     // Close sockets
     close(s0);

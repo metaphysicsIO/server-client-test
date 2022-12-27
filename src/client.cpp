@@ -22,6 +22,8 @@ int main()
 {
     const char *peer_host = "localhost";
     const short peer_port = 1234;
+    const int packet_size = 1024;
+    bool play = true;
 
     // Create the socket
     int s0 = create_socket(); //socket(AF_INET, SOCK_STREAM, 0);
@@ -43,19 +45,30 @@ int main()
     // connect to server
     int conn = connect(s0, (struct sockaddr*) &server, sizeof(server));
 
-    /* Server interaction*/
-    char input[] = "Hello";
-    int packet_size = 1024;
+    // Retain connection
+    while(play)
+    {
+        // Take user input
+        std::string s;
+        getline(std::cin, s);
+        // Convert to char array
+        const char *io = s.c_str();
+        
+        // SEND
+        write(s0, io, sizeof(io));
 
-    // Send input to server.
-    write(s0, input, sizeof(input));
+        // RECV
+        char buffer[packet_size];
+        int res = read(s0, buffer, packet_size);
 
-    // RECV from server
-    char buffer[packet_size];
-    int res = read(s0, buffer, packet_size);
+        // Print what server sent
+        std::cout << "<Server returns>: " << buffer << std::endl;
 
-    // Print what server sends 
-    std::cout << "<Server returns>: " << buffer << std::endl;
+        if(s == "quit")
+        {
+            play = false;
+        }
+    }
 
     return 0;
 }
