@@ -36,16 +36,12 @@ struct sockaddr_in set_self_addr(short listen_port)
 int main()
 {
     // TODO: Create server class.
-    // TODO: Add variables as needed.
     const short listen_port = 1234;
-    //const int MAX_QUEUE_LENGTH = 1;
     const int packet_size = 1024;
     char exit[packet_size] = "quit";
     bool play = true;
     struct sockaddr_in peer_addr;
     int addr_len;
-    //char buffer[packet_size];
-
     int s1;
     int max_clients = 100;
     int client_socket[max_clients] = {0};
@@ -117,13 +113,13 @@ int main()
             std::cout << "SELECT ERR" << std::endl;
         }
 
-        //TODO: activity on master socket: incoming connection
+        //Activity on master socket: incoming connection
         if(FD_ISSET(s0, &read_fds))
         {
             s1 = accept(s0, (struct sockaddr *) &my_addr, 
                        (socklen_t*)&addr_len);
 
-            // TODO: Add socket to array of sockets
+            // Add socket to array of sockets
             for(int i = 0; i < max_clients; ++i)
             {
                 // Find empty position
@@ -135,7 +131,6 @@ int main()
             }
         }
 
-        // TODO: It will not access this.
         for(int i = 0; i < max_clients; ++i)
         {
             sd = client_socket[i];
