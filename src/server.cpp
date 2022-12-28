@@ -4,6 +4,8 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#include <arpa/inet.h>
+
 int create_socket()
 {
     int s = socket(AF_INET, SOCK_STREAM, 0);
@@ -36,10 +38,24 @@ int main()
     // TODO: Create server class.
     // TODO: Add variables as needed.
     const short listen_port = 1234;
-    const int MAX_QUEUE_LENGTH = 1;
+    //const int MAX_QUEUE_LENGTH = 1;
     const int packet_size = 1024;
     char exit[packet_size] = "quit";
     bool play = true;
+    struct sockaddr_in peer_addr;
+    int addr_len;
+    //char buffer[packet_size];
+
+    int s1;
+    int max_clients = 100;
+    int client_socket[max_clients] = {0};
+    int sd;
+    int max_sd;
+    int action;
+    int value;
+
+    // set socket descriptors
+    fd_set read_fds;
 
     // Create the socket
     int s0 = create_socket(); //socket(AF_INET, SOCK_STREAM, 0);
@@ -55,30 +71,102 @@ int main()
     setsockopt(s0, SOL_SOCKET, SO_LINGER, &linger_opt, sizeof(linger_opt));
 
     // Listen for connection
-    int conn = listen(s0, MAX_QUEUE_LENGTH);
+    //int conn = listen(s0, max_clients);
+    listen(s0, max_clients);
 
     // Accept connection
-    struct sockaddr_in peer_addr;
-    socklen_t peer_addr_len;
-    int s1 = accept(s0, (struct sockaddr*) &peer_addr, &peer_addr_len);
+    addr_len = sizeof(my_addr);
 
     // Continue until kill SIG
     while(play)
     {
-        // RECV from client
-        char buffer[packet_size];
-        conn = read(s1, buffer, packet_size);
+        // clears set. First step for init file descriptor set.
+        FD_ZERO(&read_fds);
 
-        // Print client message
-        std::cout << "<Client returns>: " << buffer << std::endl;
+        // add master socket to set (s0)
+        FD_SET(s0, &read_fds);
+        max_sd = s0;
 
-        // Respond to client (with client message)
-        write(s1, buffer, sizeof(buffer));
-
-        // Check if exiting.
-        if(buffer == exit)
+        // Add child sockets to set
+        for( int i = 0; i < max_clients; ++i)
         {
-            play = false;
+            // Socket descriptor
+            sd = client_socket[i];
+
+            // Check if socket is valid
+            if(sd > 0)
+            {
+                // adds the file descriptor fd to set.
+                FD_SET(sd, &read_fds);
+
+                // Set the highest socket descriptor, for Select()
+                if(sd > max_sd)
+                {
+                    max_sd = sd;
+                }
+            }
+        }
+
+        // Wait for action on a socket.
+        // man: SELECT(2): 
+        // select(readfds, writefds, exceptfds, nfds, timeout)
+        action = select(max_sd+1, &read_fds, NULL, NULL, NULL);
+
+        if((action < 0) && (errno!=EINTR))
+        {
+            std::cout << "SELECT ERR" << std::endl;
+        }
+
+        //TODO: activity on master socket: incoming connection
+        if(FD_ISSET(s0, &read_fds))
+        {
+            s1 = accept(s0, (struct sockaddr *) &my_addr, 
+                       (socklen_t*)&addr_len);
+
+            // TODO: Add socket to array of sockets
+            for(int i = 0; i < max_clients; ++i)
+            {
+                // Find empty position
+                if(client_socket[i] == 0)
+                {
+                    client_socket[i] = s1;
+                    break;
+                }
+            }
+        }
+
+        // TODO: It will not access this.
+        for(int i = 0; i < max_clients; ++i)
+        {
+            sd = client_socket[i];
+
+            char buffer[packet_size];
+
+            if(FD_ISSET(sd, &read_fds))
+            {
+                // Check buffers
+                if((value = read(sd, buffer, packet_size)) == 0)
+                {
+                    // This means someone disconnected.
+                    getpeername(sd, (struct sockaddr *) &my_addr, (socklen_t*)&addr_len);
+                    printf("Disconnected - %s : %d\n", inet_ntoa(my_addr.sin_addr),
+                                                    ntohs(my_addr.sin_port));
+                    // Close socket
+                    close(sd);
+                    // Set as empty sock in list.
+                    client_socket[i] = 0;
+                }else{
+                    buffer[value] = '\0';
+
+                    getpeername(sd, (struct sockaddr *) &my_addr, (socklen_t*)&addr_len);
+
+                    // Prints what the client has sent.
+                    printf("[%s:%d]: %s\n", inet_ntoa(my_addr.sin_addr),ntohs(my_addr.sin_port),buffer);
+
+                    // SEND
+                    write(sd, buffer, packet_size);
+                }
+            }
         }
     }
 

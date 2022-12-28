@@ -43,19 +43,23 @@ int main()
     memmove(&(server.sin_addr.s_addr), host->h_addr_list[0], 4);
 
     // connect to server
-    int conn = connect(s0, (struct sockaddr*) &server, sizeof(server));
+    connect(s0, (struct sockaddr*) &server, sizeof(server));
 
     // Retain connection
     while(play)
     {
         // Take user input
         std::string s;
+
+        printf("> ");
         getline(std::cin, s);
         // Convert to char array
         const char *io = s.c_str();
         
+        std::cout << io << ": " << s.length() << std::endl;
+
         // SEND
-        write(s0, io, sizeof(io));
+        write(s0, io, s.length());
 
         // RECV
         char buffer[packet_size];
