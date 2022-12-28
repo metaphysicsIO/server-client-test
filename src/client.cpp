@@ -55,8 +55,6 @@ int main()
         getline(std::cin, s);
         // Convert to char array
         const char *io = s.c_str();
-        
-        std::cout << io << ": " << s.length() << std::endl;
 
         // SEND
         write(s0, io, s.length());
