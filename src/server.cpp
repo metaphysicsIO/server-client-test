@@ -35,12 +35,13 @@ struct sockaddr_in set_self_addr(short listen_port)
 
 int main()
 {
+    // Quick player test
+
+
     // TODO: Create server class.
     const short listen_port = 1234;
     const int packet_size = 1024;
-    char exit[packet_size] = "quit";
     bool play = true;
-    struct sockaddr_in peer_addr;
     int addr_len;
     int s1;
     int max_clients = 100;
@@ -60,7 +61,7 @@ int main()
     sockaddr_in my_addr = set_self_addr(listen_port); // TODO: remove `listen_port` after server class made.
 
     // bind sock to addr
-    int res = bind(s0, (struct sockaddr*) &my_addr, sizeof(my_addr));
+    bind(s0, (struct sockaddr*) &my_addr, sizeof(my_addr));
 
     // Set to close listen port at program termination
     struct linger linger_opt = {1,0};
@@ -131,6 +132,7 @@ int main()
             }
         }
 
+        //TODO: Use the map primative for managing non-empty sockets
         for(int i = 0; i < max_clients; ++i)
         {
             sd = client_socket[i];
