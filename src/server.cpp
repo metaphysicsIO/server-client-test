@@ -5,6 +5,17 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+#include "player.h"
+
+void test_game()
+{
+    // TODO: Figure out how to attach each instance of this per user.
+    // IDEA: Doubly-linked list with a vector
+    Player player;
+    player.set_username("zerocool");
+    std::cout << "set username to: " << player.get_username() << std::endl;
+}
+
 int create_socket()
 {
     int s = socket(AF_INET, SOCK_STREAM, 0);
@@ -34,6 +45,10 @@ struct sockaddr_in set_self_addr(short listen_port)
 
 int main()
 {
+    // Testing player/game.
+    test_game();
+
+
     // TODO: Create server class.
     const short listen_port = 1234;
     const int packet_size = 1024;
