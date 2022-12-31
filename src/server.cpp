@@ -3,7 +3,6 @@
 #include <string.h>
 #include <netdb.h>
 #include <unistd.h>
-
 #include <arpa/inet.h>
 
 int create_socket()
@@ -35,9 +34,6 @@ struct sockaddr_in set_self_addr(short listen_port)
 
 int main()
 {
-    // Quick player test
-
-
     // TODO: Create server class.
     const short listen_port = 1234;
     const int packet_size = 1024;
